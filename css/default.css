@@ -3,7 +3,6 @@ body {
 }
 
 #page {
-    padding-top: 4em;
     font-size: 16px;
     line-height: 1.8125em;
     font-family: "Roboto", Arial, serif;
@@ -102,4 +101,16 @@ a.navbar-brand {
 .btn-success {
     background-color: #5BC0DC;
     border-color:     #46B8DA;
+}
+
+.post-body {
+    padding: 1em;
+}
+
+.post-info {
+    padding: 1em;
+}
+
+.side-bar {
+    min-height: 1024px;
 }
