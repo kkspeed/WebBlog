@@ -3,6 +3,7 @@ body {
 }
 
 #page {
+    padding-top: 4em;
     font-size: 16px;
     line-height: 1.8125em;
     font-family: "Roboto", Arial, serif;
