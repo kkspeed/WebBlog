@@ -3,11 +3,14 @@ module WebBlog.Rules where
 
 import Data.Monoid
 import Hakyll
+import Text.Highlighting.Kate (styleToCss, tango)
+
 
 compileRules :: Rules ()
 compileRules = do
   compileImage
   compileCss
+  createSyntaxCss
   compilePosts
   compileTemplates
   compilePostList
@@ -21,6 +24,11 @@ compileCss :: Rules ()
 compileCss = match "css/*" $ do
                route idRoute
                compile copyFileCompiler
+
+createSyntaxCss :: Rules ()
+createSyntaxCss = create ["css/syntax.css"] $ do
+               route idRoute
+               compile $ makeItem (compressCss . styleToCss $ tango)
 
 compilePosts :: Rules ()
 compilePosts = match "posts/*" $ do
