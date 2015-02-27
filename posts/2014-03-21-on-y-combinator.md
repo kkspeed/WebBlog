@@ -1,5 +1,6 @@
 ---
 title: On Y Combinator
+tags: Functional programming, Clojure
 ---
 Recently I was reading a book on programming languages design and came
 across something interesting related to Y combinator.

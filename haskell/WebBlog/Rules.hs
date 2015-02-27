@@ -8,12 +8,14 @@ import Text.Highlighting.Kate (styleToCss, espresso)
 
 compileRules :: Rules ()
 compileRules = do
+  tags <- buildTags "posts/*" (fromCapture "tags/*.html")
   compileImage
   compileCss
   createSyntaxCss
-  compilePosts
+  compilePosts tags
   compileTemplates
-  compilePostList
+  compilePostList tags
+  makeTagPages tags
 
 compileImage :: Rules ()
 compileImage = match "images/*" $ do
@@ -30,30 +32,49 @@ createSyntaxCss = create ["css/syntax.css"] $ do
                route idRoute
                compile $ makeItem (compressCss . styleToCss $ espresso)
 
-compilePosts :: Rules ()
-compilePosts = match "posts/*" $ do
+compilePosts :: Tags -> Rules ()
+compilePosts tags = match "posts/*" $ do
         route $ setExtension "html"
         compile $ do
           pandocCompiler
             >>= saveSnapshot "content"
-            >>= loadAndApplyTemplate "templates/post.html" postCtx
-            >>= loadAndApplyTemplate "templates/base.html" postCtx
+            >>= loadAndApplyTemplate "templates/post.html" (postCtxWithTags tags)
+            >>= loadAndApplyTemplate "templates/base.html" (postCtxWithTags tags)
             >>= relativizeUrls
 
-compilePostList :: Rules ()
-compilePostList = create ["index.html"] $ do
+makeTagPages :: Tags -> Rules ()
+makeTagPages tags = tagsRules tags $ \_ pattern -> do
+        route idRoute
+        compile $ do
+            posts <- recentFirst =<< loadAll pattern
+            let ctx = postListCtx tags (return posts)
+            makeItem ""
+              >>= loadAndApplyTemplate "templates/tags.html" ctx
+              >>= loadAndApplyTemplate "templates/base.html" ctx
+              >>= relativizeUrls
+
+compilePostList :: Tags -> Rules ()
+compilePostList tags = create ["index.html"] $ do
         route $ idRoute
         compile $ do
           posts <- recentFirst =<< loadAllSnapshots "posts/*" "content"
-          let postListCtx = listField "posts" teaserCtx (return posts) <>
-                            defaultContext
+          let ctx = postListCtx tags (return posts)
           makeItem ""
-                  >>= loadAndApplyTemplate "templates/post-list.html" postListCtx
-                  >>= loadAndApplyTemplate "templates/base.html" postListCtx
+                  >>= loadAndApplyTemplate "templates/post-list.html" ctx
+                  >>= loadAndApplyTemplate "templates/base.html" ctx
                   >>= relativizeUrls
 
 compileTemplates :: Rules ()
 compileTemplates = match "templates/*" $ compile templateCompiler
+
+postListCtx :: Tags -> Compiler [Item String] -> Context String
+postListCtx tags posts = listField "posts" teaserCtx posts <>
+                         defaultContext <>
+                         tagCloudField "tag-cloud" 200.0 200.0 tags
+
+postCtxWithTags :: Tags -> Context String
+postCtxWithTags tags = tagsField "tags" tags <> postCtx <>
+                       tagCloudField "tag-cloud" 200.0 200.0 tags
 
 postCtx :: Context String
 postCtx = dateField "date" "%B %e, %Y" <>

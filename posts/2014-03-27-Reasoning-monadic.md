@@ -1,5 +1,6 @@
 ---
 title: Reasoning the Monadic Code
+tags: Functional programming, Haskell
 ---
 I was always afraid of Haskell Monads. But... I like Haskell, which
 means, Monads are inevitable. Well, so let me have a taste.
