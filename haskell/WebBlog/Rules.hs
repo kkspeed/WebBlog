@@ -15,12 +15,18 @@ compileRules = do
   compilePosts tags
   compileTemplates
   compilePostList tags
+  copyPostMedia
   makeTagPages tags
 
 compileImage :: Rules ()
 compileImage = match "images/*" $ do
                  route idRoute
                  compile copyFileCompiler
+
+copyPostMedia :: Rules ()
+copyPostMedia = match "media/*" $ do
+                  route idRoute
+                  compile copyFileCompiler
 
 compileCss :: Rules ()
 compileCss = match "css/*" $ do

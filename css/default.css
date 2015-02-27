@@ -125,3 +125,16 @@ a.navbar-brand {
     font-size: 120% !important;
     margin: 0.2em;
 }
+
+.img-medium-post img {
+    width: 300px;
+}
+
+.post-list-body {
+    padding: 1em;
+    margin-top: -2.5em;
+}
+
+.post-list-date {
+    color: #FFFF00;
+}
