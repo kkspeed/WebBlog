@@ -1,14 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 module WebBlog.Rules where
 
+import Control.Applicative
+import Data.Time
+import Data.List
+import System.Locale (defaultTimeLocale)
 import Data.Monoid
 import Hakyll
 import Text.Highlighting.Kate (styleToCss, espresso)
-
+import Text.Blaze.Html.Renderer.String (renderHtml)
+import qualified Text.Blaze.Html5                as H
+import qualified Text.Blaze.Html5.Attributes     as A
 
 compileRules :: Rules ()
 compileRules = do
   tags <- buildTags "posts/*" (fromCapture "tags/*.html")
+  archive <- buildArchive "posts/*" (fromCapture "archives/*.html")
   compileImage
   compileCss
   createSyntaxCss
@@ -17,6 +24,7 @@ compileRules = do
   compilePostList tags
   copyPostMedia
   makeTagPages tags
+  makeTagPages archive
 
 compileImage :: Rules ()
 compileImage = match "images/*" $ do
@@ -76,11 +84,16 @@ compileTemplates = match "templates/*" $ compile templateCompiler
 postListCtx :: Tags -> Compiler [Item String] -> Context String
 postListCtx tags posts = listField "posts" teaserCtx posts <>
                          defaultContext <>
-                         tagCloudField "tag-cloud" 200.0 200.0 tags
+                         tagCloudField "tag-cloud" 100.0 200.0 tags
 
-postCtxWithTags :: Tags -> Context String
-postCtxWithTags tags = tagsField "tags" tags <> postCtx <>
-                       tagCloudField "tag-cloud" 200.0 200.0 tags
+postCtxWithTags :: Tags -> Tags -> Context String
+postCtxWithTags tags archive = tagsField "tags" tags <> postCtx <>
+                       tagCloudField "tag-cloud" 100.0 200.0 tags <>
+                       tagCloudFieldWith "archive-list" makeLinkList
+                           (("<li>" ++) . (++ "</li>") . intercalate "\n")
+                           100.0
+                           100.0
+                           archive
 
 postCtx :: Context String
 postCtx = dateField "date" "%B %e, %Y" <>
@@ -90,3 +103,16 @@ teaserCtx :: Context String
 teaserCtx = teaserField "teaser" "content" <>
             dateField "date" "%B %e, %Y"   <>
             defaultContext
+
+buildArchive :: (MonadMetadata m, Functor m) => Pattern ->
+                (String -> Identifier) -> m Tags
+buildArchive = buildTagsWith getDate
+
+getDate :: (MonadMetadata m, Functor m) => Identifier -> m [String]
+getDate identifier = (return . formatTime defaultTimeLocale "%Y")
+                     <$> getItemUTC defaultTimeLocale identifier
+
+makeLinkList :: Double -> Double -> String -> String ->
+                Int -> Int -> Int -> String
+makeLinkList _ _ tag url cnt _ _ = renderHtml $
+  H.li $ H.a H.! A.href (H.toValue url) $ H.toHtml tag
