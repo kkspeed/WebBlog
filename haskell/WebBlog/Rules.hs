@@ -1,16 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 module WebBlog.Rules where
 
-import Control.Applicative
-import Data.Time
-import Data.List
-import System.Locale (defaultTimeLocale)
-import Data.Monoid
-import Hakyll
-import Text.Highlighting.Kate (styleToCss, espresso)
-import Text.Blaze.Html.Renderer.String (renderHtml)
+import           Control.Applicative
+import           Data.Time
+import           Data.Monoid
+import           Data.List
+import qualified Data.Set                        as S
+import           System.Locale                   (defaultTimeLocale)
+import           Text.Highlighting.Kate          (styleToCss, espresso)
+import           Text.Blaze.Html.Renderer.String (renderHtml)
+import           Text.Pandoc.Options
 import qualified Text.Blaze.Html5                as H
 import qualified Text.Blaze.Html5.Attributes     as A
+import           Hakyll
 
 compileRules :: Rules ()
 compileRules = do
@@ -50,7 +52,7 @@ compilePosts tags archives = match "posts/*" $ do
         route $ setExtension "html"
         compile $ do
           let ctx = postCtxWithTags tags archives
-          pandocCompiler
+          customPandocCompiler
             >>= saveSnapshot "content"
             >>= loadAndApplyTemplate "templates/post.html" ctx
             >>= loadAndApplyTemplate "templates/base.html" ctx
@@ -132,3 +134,13 @@ makeLinkList :: Double -> Double -> String -> String ->
 makeLinkList _ _ tag url cnt _ _ = renderHtml $
   H.li $ H.a H.! A.href (H.toValue url) $
    H.toHtml (tag ++ " (" ++ show cnt ++ ")")
+
+customPandocCompiler :: Compiler (Item String)
+customPandocCompiler =
+    let customExtensions = [Ext_tex_math_dollars]
+        defaultExtensions = writerExtensions defaultHakyllWriterOptions
+        newExtensions = foldr S.insert defaultExtensions customExtensions
+        writerOptions = defaultHakyllWriterOptions {
+                          writerExtensions = newExtensions
+                        }
+    in pandocCompilerWith defaultHakyllReaderOptions writerOptions
