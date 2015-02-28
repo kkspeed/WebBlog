@@ -19,12 +19,11 @@ compileRules = do
   compileImage
   compileCss
   createSyntaxCss
-  compilePosts tags
+  compilePosts tags archive
   compileTemplates
-  compilePostList tags
+  compilePostList tags archive
   copyPostMedia
-  makeTagPages tags
-  makeTagPages archive
+  makeTagPages tags archive
 
 compileImage :: Rules ()
 compileImage = match "images/*" $ do
@@ -46,33 +45,44 @@ createSyntaxCss = create ["css/syntax.css"] $ do
                route idRoute
                compile $ makeItem (compressCss . styleToCss $ espresso)
 
-compilePosts :: Tags -> Rules ()
-compilePosts tags = match "posts/*" $ do
+compilePosts :: Tags -> Tags -> Rules ()
+compilePosts tags archives = match "posts/*" $ do
         route $ setExtension "html"
         compile $ do
+          let ctx = postCtxWithTags tags archives
           pandocCompiler
             >>= saveSnapshot "content"
-            >>= loadAndApplyTemplate "templates/post.html" (postCtxWithTags tags)
-            >>= loadAndApplyTemplate "templates/base.html" (postCtxWithTags tags)
+            >>= loadAndApplyTemplate "templates/post.html" ctx
+            >>= loadAndApplyTemplate "templates/base.html" ctx
             >>= relativizeUrls
 
-makeTagPages :: Tags -> Rules ()
-makeTagPages tags = tagsRules tags $ \_ pattern -> do
-        route idRoute
-        compile $ do
-            posts <- recentFirst =<< loadAll pattern
-            let ctx = postListCtx tags (return posts)
-            makeItem ""
-              >>= loadAndApplyTemplate "templates/tags.html" ctx
-              >>= loadAndApplyTemplate "templates/base.html" ctx
-              >>= relativizeUrls
+makeTagPages :: Tags -> Tags -> Rules ()
+makeTagPages tags archives = do
+  tagsRules tags $ \_ pattern -> do
+    route idRoute
+    compile $ do
+      posts <- recentFirst =<< loadAll pattern
+      let ctx = postListCtx tags archives (return posts)
+      makeItem ""
+        >>= loadAndApplyTemplate "templates/tags.html" ctx
+        >>= loadAndApplyTemplate "templates/base.html" ctx
+        >>= relativizeUrls
+  tagsRules archives $ \_ pattern -> do
+    route idRoute
+    compile $ do
+      posts <- recentFirst =<< loadAll pattern
+      let ctx = postListCtx tags archives (return posts)
+      makeItem ""
+        >>= loadAndApplyTemplate "templates/tags.html" ctx
+        >>= loadAndApplyTemplate "templates/base.html" ctx
+        >>= relativizeUrls
 
-compilePostList :: Tags -> Rules ()
-compilePostList tags = create ["index.html"] $ do
+compilePostList :: Tags -> Tags -> Rules ()
+compilePostList tags archives = create ["index.html"] $ do
         route $ idRoute
         compile $ do
           posts <- recentFirst =<< loadAllSnapshots "posts/*" "content"
-          let ctx = postListCtx tags (return posts)
+          let ctx = postListCtx tags archives (return posts)
           makeItem ""
                   >>= loadAndApplyTemplate "templates/post-list.html" ctx
                   >>= loadAndApplyTemplate "templates/base.html" ctx
@@ -81,19 +91,24 @@ compilePostList tags = create ["index.html"] $ do
 compileTemplates :: Rules ()
 compileTemplates = match "templates/*" $ compile templateCompiler
 
-postListCtx :: Tags -> Compiler [Item String] -> Context String
-postListCtx tags posts = listField "posts" teaserCtx posts <>
-                         defaultContext <>
-                         tagCloudField "tag-cloud" 100.0 200.0 tags
+postListCtx :: Tags -> Tags -> Compiler [Item String] -> Context String
+postListCtx tags archives posts = listField "posts" teaserCtx posts <>
+                                  defaultContext <>
+                                  tagCloudField "tag-cloud" 100.0 200.0 tags <>
+                                  archiveCloud archives
+
 
 postCtxWithTags :: Tags -> Tags -> Context String
 postCtxWithTags tags archive = tagsField "tags" tags <> postCtx <>
                        tagCloudField "tag-cloud" 100.0 200.0 tags <>
-                       tagCloudFieldWith "archive-list" makeLinkList
-                           (("<li>" ++) . (++ "</li>") . intercalate "\n")
+                       archiveCloud archive
+
+archiveCloud :: Tags -> Context String
+archiveCloud archives = tagCloudFieldWith "archive-list" makeLinkList
+                           (("<ul>" ++) . (++ "</ul>") . intercalate "\n" . reverse . sort)
                            100.0
                            100.0
-                           archive
+                           archives
 
 postCtx :: Context String
 postCtx = dateField "date" "%B %e, %Y" <>
@@ -115,4 +130,5 @@ getDate identifier = (return . formatTime defaultTimeLocale "%Y")
 makeLinkList :: Double -> Double -> String -> String ->
                 Int -> Int -> Int -> String
 makeLinkList _ _ tag url cnt _ _ = renderHtml $
-  H.li $ H.a H.! A.href (H.toValue url) $ H.toHtml tag
+  H.li $ H.a H.! A.href (H.toValue url) $
+   H.toHtml (tag ++ " (" ++ show cnt ++ ")")

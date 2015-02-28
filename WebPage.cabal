@@ -12,7 +12,7 @@ cabal-version:  >= 1.8
 description:
   Statically generated web blog.
 
-executable web
+executable blog
   main-is:         Main.hs
   hs-source-dirs:  haskell
   build-depends:   base > 4.6 && < 4.8
