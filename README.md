@@ -1,2 +1,2 @@
 # WebBlog
-My personal web blog
+My personal web blog at http://coldcodes.info
