@@ -88,13 +88,13 @@ postListCtx :: Tags -> Archives -> Compiler [Item String] -> Context String
 postListCtx tags archives posts = listField "posts" teaserCtx posts
                                <> defaultContext
                                <> tagCloudField "tag-cloud" 100.0 200.0 tags
-                               <> archiveCloudField "archive-list" archives
+                               <> archiveField "archive-list" archives
 
 postCtxWithTags :: Tags -> Archives -> Context String
 postCtxWithTags tags archive = tagsField "tags" tags
                             <> postCtx
                             <> tagCloudField "tag-cloud" 100.0 200.0 tags
-                            <> archiveCloudField "archive-list" archive
+                            <> archiveField "archive-list" archive
 
 postCtx :: Context String
 postCtx = dateField "date" "%B %e, %Y" <>
