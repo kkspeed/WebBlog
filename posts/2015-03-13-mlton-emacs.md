@@ -1,6 +1,6 @@
 ---
 title: Better MLton Hacking Experience with Emacs
-tags: MLton, Emacs, Functional Programming
+tags: MLton, Emacs, Functional programming
 ---
 
 I'm doing a project to modify MLton's garbage collector. But working
@@ -19,8 +19,8 @@ MLton's source directory.
 
 The installation documentation for those 2 modes are at:
 
-- http://mlton.org/EmacsBgBuildMode
-- http://mlton.org/EmacsDefUseMode
+- [Emacs bg-build-mode](http://mlton.org/EmacsBgBuildMode)
+- [Emacs def-use-mode](http://mlton.org/EmacsDefUseMode)
 
 A tiny glitch with bg-build-mode is that it uses old
 *compilation-compat-parse-errors* routine, which is not included in
