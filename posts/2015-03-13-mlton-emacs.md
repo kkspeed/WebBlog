@@ -47,4 +47,4 @@ with the following modification:
 With these two modes enabled, now I can browse the code more
 efficiently:
 
-![MLton def-use-mode](/media/mlton-def-use.png)
+![MLton DefUse](/media/mlton-def-use.png)
