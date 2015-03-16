@@ -27,7 +27,7 @@ A tiny glitch with bg-build-mode is that it uses old
 newer version of Emacs (I'm using Emacs 24). It can be easily diabled
 with the following modification:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{#mycode .lisp}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{#mycode .commonlisp}
 (defun bg-build-parse-messages ()
   (let ((original-display-message
          (when (fboundp 'display-message)
