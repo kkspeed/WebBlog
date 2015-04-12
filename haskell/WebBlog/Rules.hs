@@ -1,10 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 module WebBlog.Rules where
 
+import qualified Control.Exception               as CE
+import qualified GHC.IO.Exception                as G
+import           Foreign.C.Error                 (Errno(Errno), ePIPE)
+import           Data.String                     (fromString)
 import           Data.Monoid
 import qualified Data.Set                        as S
+import qualified Data.ByteString.Char8           as C8
+import           Data.IORef
+import           System.IO.Unsafe                (unsafePerformIO)
 import           Text.Highlighting.Kate          (styleToCss, espresso)
 import           Text.Pandoc.Options
+import           Text.Pandoc.Definition
+import           Text.Blaze.Html
+import qualified Text.Blaze.Html5                as H
+import qualified Text.Blaze.Html5.Attributes     as A
+import           Text.Blaze.Html.Renderer.String (renderHtml)
+import           Pipes
+import           Pipes.Shell
 import           Hakyll
 import           Hakyll.Web.Archives
 
@@ -113,7 +127,11 @@ customPandocCompiler =
         writerOptions = defaultHakyllWriterOptions {
                           writerExtensions = newExtensions
                         }
-    in pandocCompilerWith defaultHakyllReaderOptions writerOptions
+    in pandocCompilerWithTransform
+         defaultHakyllReaderOptions
+         writerOptions
+         pygmentize
+
 
 myFeedConfiguration :: FeedConfiguration
 myFeedConfiguration = FeedConfiguration
@@ -123,3 +141,32 @@ myFeedConfiguration = FeedConfiguration
     , feedAuthorEmail = "muyuanli@buffalo.edu"
     , feedRoot        = "http://coldcodes.info"
     }
+
+pygmentize :: Pandoc -> Pandoc
+pygmentize (Pandoc meta bs) = Pandoc meta (map pygTrans bs)
+
+pygTrans :: Block -> Block
+pygTrans (CodeBlock (cls, [lang], _) code) =
+    let composed = renderHtml $ H.figure !
+                      (A.class_ . fromString) cls $ do
+                      preEscapedToHtml (runPygment lang code)
+    in RawBlock "html" composed
+pygTrans x = x
+
+runPygment :: String -> String -> String
+runPygment lang txt = unsafePerformIO $ do
+  mv <- newIORef ""
+  runShell $ yield (C8.pack txt) >?>
+           cmd ("pygmentize -l " ++ lang ++ " -f html") >->
+           ignoreErr >-> go mv
+  readIORef mv
+      where go mvar = do
+              bs <- await
+              x  <- liftIO $ CE.try $ modifyIORef mvar (++(C8.unpack bs))
+              case x of
+                Left (G.IOError { G.ioe_type  = G.ResourceVanished
+                                , G.ioe_errno = Just ioe })
+                     | Errno ioe == ePIPE
+                         -> return ()
+                Left  e  -> liftIO (CE.throwIO e)
+                Right () -> go mvar
