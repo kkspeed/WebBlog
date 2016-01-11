@@ -129,6 +129,11 @@ a.navbar-brand {
     width: 300px;
 }
 
+.img-large-post img {
+    width: 600px;
+}
+
+
 .post-list-body {
     padding: 1em;
     margin-top: -2.5em;
