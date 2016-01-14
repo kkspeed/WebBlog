@@ -31,3 +31,5 @@ executable blog
                  , time >= 1.4.0.1
                  , pipes-shell == 0.1.*
                  , pipes == 4.1.*
+                 , regex-compat
+                 , MissingH

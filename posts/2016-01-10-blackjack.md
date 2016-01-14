@@ -13,7 +13,7 @@ which would give the house a bit more advantage but it should not be
 obvious to notice.
 
 However, not all casinos implement the assumed blackjack rule in basic
-strategy. In fact, most of them don't, which give them a bit more
+strategy :joy:. In fact, most of them don't, which give them a bit more
 advantage. The rules for the casinos in Vegas can be found
 [here](http://wizardofvegas.com/guides/blackjack-survey/).
 

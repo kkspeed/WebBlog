@@ -5,6 +5,7 @@ import qualified Control.Exception               as CE
 import qualified GHC.IO.Exception                as G
 import           Foreign.C.Error                 (Errno(Errno), ePIPE)
 import           Data.String                     (fromString)
+import           Data.String.Utils               (replace)
 import           Data.Monoid
 import qualified Data.Set                        as S
 import qualified Data.ByteString.Char8           as C8
@@ -13,6 +14,8 @@ import           System.IO.Unsafe                (unsafePerformIO)
 import           Text.Highlighting.Kate          (styleToCss, espresso)
 import           Text.Pandoc.Options
 import           Text.Pandoc.Definition
+import           Text.Pandoc.Walk
+import           Text.Regex                      (mkRegex, matchRegex)
 import           Text.Blaze.Html
 import qualified Text.Blaze.Html5                as H
 import qualified Text.Blaze.Html5.Attributes     as A
@@ -21,6 +24,7 @@ import           Pipes
 import           Pipes.Shell
 import           Hakyll
 import           Hakyll.Web.Archives
+import           WebBlog.Emoji                   (covertCode)
 
 compileRules :: Rules ()
 compileRules = do
@@ -28,6 +32,10 @@ compileRules = do
   archives <- buildArchives "%Y-%m" "posts/*" (fromCapture "archives/*.html")
 
   match "images/*" $ do
+    route idRoute
+    compile copyFileCompiler
+
+  match "emoji/*" $ do
     route idRoute
     compile copyFileCompiler
 
@@ -130,7 +138,7 @@ customPandocCompiler =
     in pandocCompilerWithTransform
          defaultHakyllReaderOptions
          writerOptions
-         pygmentize
+         (mkEmoji . pygmentize)
 
 
 myFeedConfiguration :: FeedConfiguration
@@ -141,6 +149,21 @@ myFeedConfiguration = FeedConfiguration
     , feedAuthorEmail = "muyuanli@buffalo.edu"
     , feedRoot        = "http://coldcodes.info"
     }
+
+mkEmoji :: Pandoc -> Pandoc
+mkEmoji = walk emojize
+
+emojize :: Inline -> Inline
+emojize (Str x) =
+    case matchRegex (mkRegex "(:[a-zA-Z]+:)") x of
+      Nothing -> Str x
+      Just matches -> RawInline "html" $
+        foldr (\c acc ->
+                replace c ("<img class=\"emojione\" alt=\"" ++
+                           c ++ "\" src=\"/emoji/" ++
+                           covertCode c ++ ".png\" style=\"height: 1em\"/>") acc)
+              x matches
+emojize x = x
 
 pygmentize :: Pandoc -> Pandoc
 pygmentize (Pandoc meta bs) = Pandoc meta (map pygTrans bs)
