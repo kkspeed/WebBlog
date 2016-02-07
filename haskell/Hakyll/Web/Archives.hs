@@ -7,7 +7,6 @@ module Hakyll.Web.Archives
 import           Control.Applicative
 import           Data.List                       (intercalate, sort)
 import           Data.Time
-import           System.Locale                   (defaultTimeLocale)
 import qualified Text.Blaze.Html5                as H
 import qualified Text.Blaze.Html5.Attributes     as A
 import           Text.Blaze.Html.Renderer.String (renderHtml)

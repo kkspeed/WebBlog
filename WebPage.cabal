@@ -15,7 +15,7 @@ description:
 executable blog
   main-is:         Main.hs
   hs-source-dirs:  haskell
-  build-depends:   base > 4.6 && < 4.8
+  build-depends:   base > 4.6 && < 4.9
                  , blaze-html >= 0.6.0
                  , blaze-markup >= 0.6.0
                  , bytestring == 0.10.*

@@ -44,7 +44,7 @@ To adapt it to the simple rule, we conclude the deck as in following
 image.
 
 <span class="img-large-post">
-![Strat image](/images/strat.png)
+![Strat image](/media/strat.png)
 </span>
 
 The game is divided into several actions. An action is basically a
